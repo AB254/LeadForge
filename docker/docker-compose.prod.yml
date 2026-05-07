@@ -95,7 +95,7 @@ services:
       dockerfile: docker/Dockerfile.worker
     container_name: leadforge-analyzer
     restart: unless-stopped
-    command: node workers/analyzer/dist/index.js
+    command: node workers/analyzer/dist/analyzer/src/index.js
     environment:
       DATABASE_URL: "postgresql://leadforge:leadforge@postgres:5432/leadforge?schema=public"
       REDIS_URL: "redis://redis:6379"
