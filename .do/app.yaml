@@ -5,6 +5,10 @@ services:
   - name: web
     dockerfile_path: docker/Dockerfile.web
     source_dir: /
+    github:
+      repo: AB254/LeadForge
+      branch: master
+      deploy_on_push: true
     http_port: 3000
     instance_count: 1
     instance_size_slug: apps-s-1vcpu-0.5gb
@@ -21,6 +25,10 @@ services:
   - name: api
     dockerfile_path: docker/Dockerfile.api
     source_dir: /
+    github:
+      repo: AB254/LeadForge
+      branch: master
+      deploy_on_push: true
     http_port: 4000
     instance_count: 1
     instance_size_slug: apps-s-1vcpu-0.5gb
@@ -43,6 +51,10 @@ workers:
   - name: scraper-worker
     dockerfile_path: docker/Dockerfile.worker
     source_dir: /
+    github:
+      repo: AB254/LeadForge
+      branch: master
+      deploy_on_push: true
     instance_count: 1
     instance_size_slug: apps-s-1vcpu-1gb
     run_command: node workers/scraper/dist/index.js
@@ -63,6 +75,10 @@ workers:
   - name: analyzer-worker
     dockerfile_path: docker/Dockerfile.worker
     source_dir: /
+    github:
+      repo: AB254/LeadForge
+      branch: master
+      deploy_on_push: true
     instance_count: 1
     instance_size_slug: apps-s-1vcpu-0.5gb
     run_command: node workers/analyzer/dist/index.js
