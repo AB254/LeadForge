@@ -1,0 +1,83 @@
+name: leadforge
+region: lon1
+
+services:
+  - name: web
+    dockerfile_path: docker/Dockerfile.web
+    source_dir: /
+    http_port: 3000
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    routes:
+      - path: /
+    envs:
+      - key: NEXT_PUBLIC_API_URL
+        value: ${api.PUBLIC_URL}
+      - key: NEXT_PUBLIC_MAPBOX_TOKEN
+        value: "pk...."
+      - key: NODE_ENV
+        value: production
+
+  - name: api
+    dockerfile_path: docker/Dockerfile.api
+    source_dir: /
+    http_port: 4000
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    routes:
+      - path: /api
+        preserve_path_prefix: true
+    envs:
+      - key: DATABASE_URL
+        value: "postgresql://doadmin:AVNS_BdJla6kBMI4Mg5ZQCEz@private-leadforge-db-do-user-36940794-0.a.db.ondigitalocean.com:25060/defaultdb?sslmode=require"
+        type: SECRET
+      - key: REDIS_URL
+        value: "rediss://default:AVNS_mjweLhntd3875pv1rd1@private-leadforge-redis-do-user-36940794-0.a.db.ondigitalocean.com:25061"
+        type: SECRET
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+
+workers:
+  - name: scraper-worker
+    dockerfile_path: docker/Dockerfile.worker
+    source_dir: /
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-1gb
+    run_command: node workers/scraper/dist/index.js
+    envs:
+      - key: DATABASE_URL
+        value: "postgresql://doadmin:AVNS_BdJla6kBMI4Mg5ZQCEz@private-leadforge-db-do-user-36940794-0.a.db.ondigitalocean.com:25060/defaultdb?sslmode=require"
+        type: SECRET
+      - key: REDIS_URL
+        value: "rediss://default:AVNS_mjweLhntd3875pv1rd1@private-leadforge-redis-do-user-36940794-0.a.db.ondigitalocean.com:25061"
+        type: SECRET
+      - key: NODE_ENV
+        value: production
+      - key: MAX_CONCURRENT_BROWSERS
+        value: "2"
+      - key: SCRAPE_DELAY_MS
+        value: "2000"
+
+  - name: analyzer-worker
+    dockerfile_path: docker/Dockerfile.worker
+    source_dir: /
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    run_command: node workers/analyzer/dist/index.js
+    envs:
+      - key: DATABASE_URL
+        value: "postgresql://doadmin:AVNS_BdJla6kBMI4Mg5ZQCEz@private-leadforge-db-do-user-36940794-0.a.db.ondigitalocean.com:25060/defaultdb?sslmode=require"
+        type: SECRET
+      - key: REDIS_URL
+        value: "rediss://default:AVNS_mjweLhntd3875pv1rd1@private-leadforge-redis-do-user-36940794-0.a.db.ondigitalocean.com:25061"
+        type: SECRET
+      - key: OPENAI_API_KEY
+        value: "sk-..."
+        type: SECRET
+      - key: ANTHROPIC_API_KEY
+        value: "sk-ant-..."
+        type: SECRET
+      - key: NODE_ENV
+        value: production

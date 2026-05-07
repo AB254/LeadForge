@@ -1,0 +1,35 @@
+{
+  "name": "leadforge-internal",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "workers/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "dev:web": "turbo dev --filter=@leadforge/web",
+    "dev:api": "turbo dev --filter=@leadforge/api",
+    "dev:workers": "turbo dev --filter=@leadforge/scraper-worker --filter=@leadforge/analyzer-worker",
+    "db:generate": "turbo db:generate",
+    "db:push": "turbo db:push",
+    "db:migrate": "cd packages/database && npx prisma migrate dev",
+    "db:seed": "cd packages/database && npx tsx src/seed.ts",
+    "db:studio": "cd packages/database && npx prisma studio",
+    "lint": "turbo lint",
+    "clean": "turbo clean"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "npm@10.0.0",
+  "dependencies": {
+    "@prisma/client": "^6.19.3"
+  }
+}

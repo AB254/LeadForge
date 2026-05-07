@@ -1,0 +1,214 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────
+
+enum LeadPriority {
+  HOT
+  WARM
+  COLD
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  RESPONDED
+  CONVERTED
+  ARCHIVED
+}
+
+enum ScrapingJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum OutreachType {
+  EMAIL
+  WHATSAPP
+  INSTAGRAM_DM
+  LINKEDIN
+  SMS
+}
+
+enum OutreachMessageStatus {
+  DRAFT
+  SENT
+  DELIVERED
+  OPENED
+  REPLIED
+}
+
+// ─── Models ──────────────────────────────────────────────────────────
+
+model Business {
+  id             String   @id @default(uuid())
+  googlePlaceId  String   @unique
+  name           String
+  category       String
+  subcategory    String?
+  address        String
+  city           String
+  state          String?
+  country        String
+  zipCode        String?
+  phone          String?
+  email          String?
+  website        String?
+  googleMapsUrl  String?
+  latitude       Float?
+  longitude      Float?
+  googleRating   Float?
+  reviewCount    Int      @default(0)
+  priceLevel     String?
+  socialLinks    Json?
+  photos         Json?
+  openingHours   Json?
+  claimedOnGoogle Boolean @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  leads            Lead[]
+  websiteAnalyses  WebsiteAnalysis[]
+
+  @@index([city, category, googleRating])
+  @@map("businesses")
+}
+
+model Lead {
+  id              String       @id @default(uuid())
+  businessId      String
+  business        Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  score           Int          @default(0)
+  priority        LeadPriority @default(COLD)
+  hasWebsite      Boolean      @default(false)
+  websiteScore    Int?
+  seoScore        Int?
+  mobileScore     Int?
+  brandingScore   Int?
+  conversionScore Int?
+  aiSummary       String?      @db.Text
+  aiRecommendations Json?
+  needsRedesign   Boolean      @default(false)
+  needsSEO        Boolean      @default(false)
+  needsBranding   Boolean      @default(false)
+  needsAds        Boolean      @default(false)
+  needsEcommerce  Boolean      @default(false)
+  needsAutomation Boolean      @default(false)
+  status          LeadStatus   @default(NEW)
+  notes           String?      @db.Text
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  outreachMessages OutreachMessage[]
+
+  @@index([score, priority, status])
+  @@map("leads")
+}
+
+model ScrapingJob {
+  id            String           @id @default(uuid())
+  query         String
+  city          String
+  state         String?
+  country       String
+  radius        Int?
+  boundingBox   Json?
+  status        ScrapingJobStatus @default(PENDING)
+  totalFound    Int              @default(0)
+  totalScraped  Int              @default(0)
+  totalFailed   Int              @default(0)
+  errorMessage  String?
+  startedAt     DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([status])
+  @@map("scraping_jobs")
+}
+
+model WebsiteAnalysis {
+  id               String   @id @default(uuid())
+  businessId       String
+  business         Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  url              String
+  overallScore     Int
+  loadTime         Float?
+  mobileResponsive Boolean?
+  hasSsl           Boolean?
+  hasAnalytics     Boolean?
+  hasCta           Boolean?
+  hasBookingSystem Boolean?
+  seoMeta          Json?
+  technologies     Json?
+  issues           Json?
+  screenshots      Json?
+  aiAnalysis       String?  @db.Text
+  analyzedAt       DateTime
+  createdAt        DateTime @default(now())
+
+  @@map("website_analyses")
+}
+
+model OutreachTemplate {
+  id        String       @id @default(uuid())
+  name      String
+  type      OutreachType
+  subject   String?
+  body      String       @db.Text
+  variables Json?
+  isDefault Boolean      @default(false)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  outreachMessages OutreachMessage[]
+
+  @@map("outreach_templates")
+}
+
+model OutreachMessage {
+  id         String                @id @default(uuid())
+  leadId     String
+  lead       Lead                  @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  templateId String?
+  template   OutreachTemplate?     @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  type       OutreachType
+  subject    String?
+  body       String                @db.Text
+  sentAt     DateTime?
+  status     OutreachMessageStatus @default(DRAFT)
+  createdAt  DateTime              @default(now())
+
+  @@map("outreach_messages")
+}
+
+model SavedSearch {
+  id       String   @id @default(uuid())
+  name     String
+  query    String
+  city     String
+  country  String
+  filters  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("saved_searches")
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(uuid())
+  event     String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@map("analytics_events")
+}

@@ -1,0 +1,47 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install system dependencies for Playwright
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    dbus
+
+# Tell Playwright to use the system-installed Chromium
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV PLAYWRIGHT_BROWSERS_PATH=/usr/lib
+
+# Copy workspace root files
+COPY package.json package-lock.json turbo.json tsconfig.json ./
+
+# Copy package manifests for dependency resolution
+COPY workers/scraper/package.json workers/scraper/
+COPY workers/analyzer/package.json workers/analyzer/
+COPY packages/database/package.json packages/database/
+COPY packages/shared/package.json packages/shared/
+
+# Install all dependencies
+RUN npm ci --ignore-scripts
+
+# Copy source code
+COPY packages/database/ packages/database/
+COPY packages/shared/ packages/shared/
+COPY workers/scraper/ workers/scraper/
+COPY workers/analyzer/ workers/analyzer/
+
+# Generate Prisma client
+RUN npx turbo db:generate
+
+# Build workers
+RUN npx turbo build --filter=@leadforge/scraper-worker --filter=@leadforge/analyzer-worker
+
+ENV NODE_ENV=production
+
+# Default command runs both workers; override in docker-compose to run individually
+CMD ["node", "workers/scraper/dist/index.js"]
